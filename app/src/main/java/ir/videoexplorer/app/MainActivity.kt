@@ -199,18 +199,19 @@ private fun VideoFeed(videos: List<VideoItem>) {
                         )
                     }
             ) {
-                AndroidView(
-                    factory = { ctx ->
-                        PlayerView(ctx).apply {
-                            useController = false
-                            player = null
-                        }
-                    },
-                    update = { view ->
-                        view.player = if (page == pagerState.currentPage) player else null
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (page == pagerState.currentPage) {
+                    AndroidView(
+                        factory = { ctx ->
+                            PlayerView(ctx).apply {
+                                useController = false
+                            }
+                        },
+                        update = { view ->
+                            view.player = player
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }
