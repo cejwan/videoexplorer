@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -78,6 +77,7 @@ private fun VideoExplorerScreen(
             if (selected >= videos.size) selected = -1
         }
     }
+
     SideEffect { registerRefresh(reload) }
     LaunchedEffect(Unit) { reload() }
 
@@ -107,7 +107,7 @@ private fun VideoExplorerScreen(
                     } else {
                         folders.forEach { uri ->
                             ListItem(
-                                headlineContent = { Text(Uri.parse(uri.toString()).lastPathSegment ?: "پوشه") },
+                                headlineContent = { Text(uri.lastPathSegment ?: "پوشه") },
                                 supportingContent = { Text(uri.toString(), maxLines = 1) },
                                 trailingContent = {
                                     TextButton(onClick = {
@@ -127,7 +127,9 @@ private fun VideoExplorerScreen(
                     ) {
                         itemsIndexed(videos, key = { _, item -> item.uri.toString() }) { index, video ->
                             Box(
-                                Modifier.aspectRatio(0.72f).padding(2.dp)
+                                Modifier
+                                    .aspectRatio(0.72f)
+                                    .padding(2.dp)
                                     .background(Color.DarkGray)
                                     .clickable { selected = index },
                                 contentAlignment = Alignment.BottomStart
@@ -141,8 +143,10 @@ private fun VideoExplorerScreen(
                                     video.name,
                                     color = Color.White,
                                     maxLines = 2,
-                                    modifier = Modifier.fillMaxWidth()
-                                        .background(Color.Black.copy(alpha = .55f)).padding(4.dp)
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color.Black.copy(alpha = 0.55f))
+                                        .padding(4.dp)
                                 )
                             }
                         }
@@ -161,24 +165,38 @@ private fun EmptyState(message: String) {
 }
 
 @Composable
-private fun VideoFeed(videos: List<VideoItem>, startIndex: Int, onBack: () -> Unit) {
-    val pagerState = rememberPagerState(initialPage = startIndex) { videos.size }
+private fun VideoFeed(
+    videos: List<VideoItem>,
+    startIndex: Int,
+    onBack: () -> Unit
+) {
+    val pagerState = rememberPagerState(
+        initialPage = startIndex,
+        pageCount = { videos.size }
+    )
     val context = androidx.compose.ui.platform.LocalContext.current
     val player = remember {
-        ExoPlayer.Builder(context).build().apply { repeatMode = ExoPlayer.REPEAT_MODE_ONE }
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = ExoPlayer.REPEAT_MODE_ONE
+        }
     }
 
     LaunchedEffect(pagerState.currentPage, videos) {
-        videos.getOrNull(pagerState.currentPage)?.let {
-            player.setMediaItem(MediaItem.fromUri(it.uri))
+        val currentVideo: VideoItem? = videos.getOrNull(pagerState.currentPage)
+        if (currentVideo != null) {
+            player.setMediaItem(MediaItem.fromUri(currentVideo.uri))
             player.prepare()
             player.playWhenReady = true
         }
     }
-    DisposableEffect(Unit) { onDispose { player.release() } }
+
+    DisposableEffect(Unit) {
+        onDispose { player.release() }
+    }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+            val currentPageVideo: VideoItem? = videos.getOrNull(page)
             Box(Modifier.fillMaxSize()) {
                 AndroidView(
                     factory = { ctx ->
@@ -189,17 +207,22 @@ private fun VideoFeed(videos: List<VideoItem>, startIndex: Int, onBack: () -> Un
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-                Text(
-                    videos[page].name,
-                    color = Color.White,
-                    modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-                )
+                currentPageVideo?.let { video ->
+                    Text(
+                        text = video.name,
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
+                    )
+                }
             }
         }
-        TextButton(onClick = {
-            player.pause()
-            onBack()
-        }, modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) {
+        TextButton(
+            onClick = {
+                player.pause()
+                onBack()
+            },
+            modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
+        ) {
             Text("بازگشت", color = Color.White)
         }
     }
