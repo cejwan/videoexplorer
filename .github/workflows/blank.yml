@@ -17,32 +17,16 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Locate project
-        run: |
-          if [ -f "settings.gradle.kts" ]; then
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
-          elif [ -f "settings.gradle" ]; then
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
-          elif [ -f "VideoExplorer/settings.gradle.kts" ]; then
-            echo "PROJECT_DIR=VideoExplorer" >> "$GITHUB_ENV"
-          elif [ -f "VideoExplorer/settings.gradle" ]; then
-            echo "PROJECT_DIR=VideoExplorer" >> "$GITHUB_ENV"
-          else
-            echo "Could not find project settings file"
-            find . -maxdepth 3 -type f
-            exit 1
-          fi
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
 
       - name: Build APK
-        run: gradle -p "$PROJECT_DIR" assembleDebug
+        run: gradle :app:assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: VideoExplorer-APK
-          path: ${{ env.PROJECT_DIR }}/app/build/outputs/apk/debug/app-debug.apk
+          path: app/build/outputs/apk/debug/app-debug.apk
