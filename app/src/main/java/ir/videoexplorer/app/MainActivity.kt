@@ -196,21 +196,18 @@ private fun VideoFeed(
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         VerticalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-val currentPreviewVideo: VideoItem? = videos.getOrNull(page)
-
-currentPreviewVideo?.let { video: VideoItem ->
-    Text(
-        text = video.name,
-        color = Color.White,
-        modifier = Modifier
-            .align(Alignment.BottomStart)
-            .padding(16.dp)
-    )
-}
+            val currentPageVideo: VideoItem? = videos.getOrNull(page)
+            Box(Modifier.fillMaxSize()) {
+                AndroidView(
+                    factory = { ctx ->
+                        PlayerView(ctx).apply {
+                            this.player = player
+                            useController = true
+                        }
                     },
                     modifier = Modifier.fillMaxSize()
                 )
-                currentPageVideo?.let { video ->
+                currentPageVideo?.let { video: VideoItem ->
                     Text(
                         text = video.name,
                         color = Color.White,
